@@ -18,32 +18,12 @@ public class WavesController : MonoBehaviour {
     Camera cam;
     
 	void Start () {
-        //texture = GetComponent<Texture>();
-        //Renderer rend = GetComponent<Renderer>();
-        //rend.enabled = true;
-        //Debug.Log(rend);
-        //Debug.Log(rend.sharedMaterial);
-        //Debug.Log(rend.sharedMaterial.mainTexture);
-        //rend.sharedMaterial.mainTexture = Texture2D.blackTexture;
-        //this.texture = rend.sharedMaterial.mainTexture as Texture2D;
-
-        /*
-        Texture2D texture = new Texture2D(256, 256);      
-        applyBlackToTexture(texture);
-        GetComponent<Renderer>().material.mainTexture = texture;
-        */
-
-        //cam = GetComponent<Camera>();
         cam = Camera.main;
         setPool();
 
         //TEXTURE
         this.texture = new Texture2D(size, size);
         GetComponent<Renderer>().material.mainTexture = texture;
-        //stretch texture
-        float screenX = transform.localScale.x;
-        float screenY = transform.localScale.z;
-        GetComponent<Renderer>().material.mainTextureScale = new Vector2(screenX, screenY);
     }
 
     //void OnMouseDown(UnityEngine.EventSystems.PointerEventData eventData) {
@@ -76,7 +56,7 @@ public class WavesController : MonoBehaviour {
     void Update () {
         //TODO MAKE FRAME-RATE-INDEPENDENT (if necessary run simulation in seperate thread at lower framerate)
 
-        //resize canvas-plane to cam-dimensions
+        // STRETCH / RESIZE CANVAS-PLANE to cam-dimensions
         float worldHeight = 2 * cam.orthographicSize;//worldWidth / cam.aspect;
         float worldWidth = worldHeight * cam.aspect;//cam.orthographicSize * Screen.width / Screen.height;
         float defaultSizeOfPlane = 10f;
@@ -88,15 +68,11 @@ public class WavesController : MonoBehaviour {
 
             float x = Input.mousePosition.x;
             float y = Input.mousePosition.y;
-            Debug.Log("In polling: " + Input.mousePosition);
 
             try
             {
                 Vector2 pixelUV = mousePositionToUVCoordinates();
                 Vector2 textureCoords = new Vector2(pixelUV.x * texture.width, pixelUV.y * texture.height);
-                //Bottom-left is (0,0)
-                Debug.Log("textureCoords: " + textureCoords);
-
                 Oscillator2Position = textureCoords;
                 Oscillator2Active = true;
             }
@@ -798,17 +774,6 @@ public class WavesController : MonoBehaviour {
 
     void drawToTexture()
     {
-        /*
-        if (this.texture == null || this.texture.width != size)
-        {
-            this.texture = new Texture2D(size, size);
-            GetComponent<Renderer>().material.mainTexture = texture;
-            //stretch texture
-            float screenX = transform.localScale.x;
-            float screenY = transform.localScale.z;
-            GetComponent<Renderer>().material.mainTextureScale = new Vector2(screenX, screenY);
-        }
-        */
 
         // Get the bitmap data of "bmp".
         //REPLACE? bd = bmp.LockBits(new Rectangle(0, 0, size, size), System.Drawing.Imaging.ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
