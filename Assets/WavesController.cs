@@ -95,32 +95,10 @@ public class WavesController : MonoBehaviour {
                 Vector2 pixelUV = mousePositionToUVCoordinates();
                 Vector2 textureCoords = new Vector2(pixelUV.x * texture.width, pixelUV.y * texture.height);
                 //Bottom-left is (0,0)
-                Debug.Log(textureCoords);
+                Debug.Log("textureCoords: " + textureCoords);
 
                 Oscillator2Position = textureCoords;
                 Oscillator2Active = true;
-
-
-
-                /*
-                float draw_thickness = 3.0f;
-                SetParticles(
-                    (int)textureCoords.x,
-                    (int)textureCoords.y,
-                    draw_thickness,
-                    draw_thickness,
-                    true, //draw static particles (doesn't matter here)
-                    
-                    )
-                    */
-                //public void SetParticles(int rectX, int rectY, int rectWidth, int rectHeight, float value, ParticleAttribute partatt)
-
-                /*
-                SetParticles(
-
-                    Convert.ToSingle(staticdraw), 
-                    WaveEngine.ParticleAttribute.Fixity);
-                    */
             }
             catch (Exception e) {
                 Debug.LogError("Incurred an exception but swallowed it. " + e);
