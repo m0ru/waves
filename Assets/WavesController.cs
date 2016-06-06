@@ -862,7 +862,8 @@ public class WavesController : MonoBehaviour {
 
             // Brightness. This value is the 'brightness' of the height.
             // Now we see why "limit" makes sense.
-            byte bright = (byte)(((float)vd[index] + limit) / (float)((limit * 2f) / 255f));
+            //byte bright = (byte)(((float)vd[index] + limit) / (float)((limit * 2f) / 255f));
+            float bright = ((vd[index] + limit) / ((limit * 2f) / 255f)); //TODO not sure about the /255f here. How does our color-space work? 0..1? 0..255? ..
 
 
             if (vd_static[index])
@@ -878,9 +879,9 @@ public class WavesController : MonoBehaviour {
 
                 if (highcont)
                 {
-                    byte red_average = (byte)((float)(color1.r + color2.r) / 2f);
-                    byte green_average = (byte)((float)(color1.g + color2.g) / 2f);
-                    byte blue_average = (byte)((float)(color1.b + color2.b) / 2f);
+                    float red_average = ((color1.r + color2.r) / 2f);
+                    float green_average = ((color1.g + color2.g) / 2f);
+                    float blue_average = ((color1.b + color2.b) / 2f);
 
                     if (vd[index] > 0)
                     {
@@ -913,14 +914,14 @@ public class WavesController : MonoBehaviour {
                 }
                 else
                 {
-                    float brightr1 = (float)bright / 255f;
-                    float brightr2 = 1f - (float)bright / 255f;
+                    float brightr1 = bright / 255f;
+                    float brightr2 = 1f - bright / 255f;
                     // rgbdata[index * 3] = (byte)((float)color1.b * brightr1 + (float)color2.b * brightr2);
                     // rgbdata[index * 3 + 1] = (byte)((float)color1.g * brightr1 + (float)color2.g * brightr2);
                     // rgbdata[index * 3 + 2] = (byte)((float)color1.r * brightr1 + (float)color2.r * brightr2);
-                    colors[index].r = (byte)((float)color1.r * brightr1 + (float)color2.r * brightr2);
-                    colors[index].g = (byte)((float)color1.g * brightr1 + (float)color2.g * brightr2);
-                    colors[index].b = (byte)((float)color1.b * brightr1 + (float)color2.b * brightr2);
+                    colors[index].r = color1.r * brightr1 + color2.r * brightr2;
+                    colors[index].g = color1.g * brightr1 + color2.g * brightr2;
+                    colors[index].b = color1.b * brightr1 + color2.b * brightr2;
                 }
 
 
