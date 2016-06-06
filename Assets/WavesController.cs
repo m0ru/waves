@@ -29,7 +29,6 @@ public class WavesController : MonoBehaviour {
     //void OnMouseDown(UnityEngine.EventSystems.PointerEventData eventData) {
     void OnMouseDown() { 
         //Debug.Log("OnMouseDown: " + eventData.position);
-        
     }
 
     Vector2 mousePositionToUVCoordinates()
@@ -80,7 +79,6 @@ public class WavesController : MonoBehaviour {
                 Debug.LogError("Incurred an exception but swallowed it. " + e);
             } 
         }
-
 
 
         // WAVE PHYSICS
@@ -398,7 +396,8 @@ public class WavesController : MonoBehaviour {
         {
             if (value.x + value.y * size < size * size)
             {
-                osc2point = (int)(value.x + value.y * size);
+                osc2point = ((int)value.x + (int)value.y * size);
+                //Debug.Log("SettingOscillator to: (x=" + (int)value.x + ") + (y=" + (int)value.y + ") * (size=" + size + ") = " + osc2point );
                 setSustain();
             }
         }
