@@ -31,12 +31,21 @@ public class WavesController : MonoBehaviour {
         applyBlackToTexture(texture);
         GetComponent<Renderer>().material.mainTexture = texture;
         */
-        initWaveEngine();
+        //REPLACE this.control = control;
+        //control.Resize += new EventHandler(control_Resize);
+        setPool();
     }
 	
 	// Update is called once per frame
 	void Update () {
-	
+        //TODO MAKE FRAME-RATE-INDEPENDENT (if necessary run simulation in seperate thread at lower framerate)
+        int beginning = System.Environment.TickCount;
+        while (System.Environment.TickCount - beginning < delay)
+            CalculateForces();
+
+        // bufgraph.Graphics.DrawImage(bmp, 0, 0, control.ClientSize.Width, control.ClientSize.Height);
+        // bufgraph.Render();
+        drawToTexture();
 	}
 
     private static void applyBlackToTexture(Texture2D texture) {
@@ -390,53 +399,6 @@ public class WavesController : MonoBehaviour {
         }
     }
 
-    /// <summary>
-    /// Initializes the WaveEngine
-    /// </summary>
-    /// <param name="control">The control where the engine renders on.</param>
-    void initWaveEngine()
-    {
-        //REPLACE this.control = control;
-        //control.Resize += new EventHandler(control_Resize);
-        setPool();
-        
-        mutex = new Mutex();
-        /*
-        ForceCalcT = new Thread(() =>
-        {
-
-            while (!disposing)
-            {
-                try
-                {
-                    while (work_now)
-                    {
-                        */
-                        mutex.WaitOne();
-                        //TODO MAKE FRAME-RATE-INDEPENDENT (if necessary run simulation in seperate thread at lower framerate)
-                        int beginning = System.Environment.TickCount;
-                        while (System.Environment.TickCount - beginning < delay)
-                            CalculateForces();
-
-                        // bufgraph.Graphics.DrawImage(bmp, 0, 0, control.ClientSize.Width, control.ClientSize.Height);
-                        // bufgraph.Render();
-                        drawToTexture();
-
-                        mutex.ReleaseMutex();
-                        /*
-                        Thread.Sleep(delay);
-                    }
-                }
-                catch
-                { work_now = false; mutex.ReleaseMutex(); }
-                Thread.Sleep(0);
-            }
-
-        });
-        
-        ForceCalcT.Start();
-        */
-    }
 
     /* 
     void control_Resize(object sender, EventArgs e)
