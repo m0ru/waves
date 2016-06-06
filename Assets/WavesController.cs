@@ -36,6 +36,14 @@ public class WavesController : MonoBehaviour {
         //cam = GetComponent<Camera>();
         cam = Camera.main;
         setPool();
+
+        //TEXTURE
+        this.texture = new Texture2D(size, size);
+        GetComponent<Renderer>().material.mainTexture = texture;
+        //stretch texture
+        float screenX = transform.localScale.x;
+        float screenY = transform.localScale.z;
+        GetComponent<Renderer>().material.mainTextureScale = new Vector2(screenX, screenY);
     }
 
     //void OnMouseDown(UnityEngine.EventSystems.PointerEventData eventData) {
@@ -812,20 +820,17 @@ public class WavesController : MonoBehaviour {
 
     void drawToTexture()
     {
+        /*
         if (this.texture == null || this.texture.width != size)
         {
             this.texture = new Texture2D(size, size);
-            //new Texture2D()
-            //texture.
-            //applyBlackToTexture(texture); //TODO for debugging. remove me.
             GetComponent<Renderer>().material.mainTexture = texture;
             //stretch texture
             float screenX = transform.localScale.x;
             float screenY = transform.localScale.z;
             GetComponent<Renderer>().material.mainTextureScale = new Vector2(screenX, screenY);
-            //GetComponent<Renderer>().material.mainTextureScale = new Vector2(scaleX, scaleY);
-
         }
+        */
 
         // Get the bitmap data of "bmp".
         //REPLACE? bd = bmp.LockBits(new Rectangle(0, 0, size, size), System.Drawing.Imaging.ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
