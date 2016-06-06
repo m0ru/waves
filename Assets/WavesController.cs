@@ -15,6 +15,7 @@ public class WavesController : MonoBehaviour {
     //public Texture2D texture;
     // Use this for initialization
 
+    Camera cam;
     
 	void Start () {
         //texture = GetComponent<Texture>();
@@ -31,18 +32,95 @@ public class WavesController : MonoBehaviour {
         applyBlackToTexture(texture);
         GetComponent<Renderer>().material.mainTexture = texture;
         */
-        //REPLACE this.control = control;
-        //control.Resize += new EventHandler(control_Resize);
+
+        //cam = GetComponent<Camera>();
+        cam = Camera.main;
         setPool();
     }
-	
-	// Update is called once per frame
-	void Update () {
+
+    //void OnMouseDown(UnityEngine.EventSystems.PointerEventData eventData) {
+    void OnMouseDown() { 
+        //Debug.Log("OnMouseDown: " + eventData.position);
+        
+    }
+
+    Vector2 mousePositionToUVCoordinates()
+    {
+        RaycastHit hit;
+        if (!Physics.Raycast(cam.ScreenPointToRay(Input.mousePosition), out hit))
+            throw new Exception("@mousePositionToUVCoordinates: Missed canvas plane with click somehow.");
+
+        Renderer rend = hit.transform.GetComponent<Renderer>();
+        MeshCollider meshCollider = hit.collider as MeshCollider;
+        if (rend == null || rend.material == null || rend.material.mainTexture == null || meshCollider == null)
+            throw new Exception("@mousePositionToUVCoordinates: some variable was null." +
+                "Renderer: " + rend +
+                ", material: " + rend.material +
+                ", maintexture: " + rend.material.mainTexture +
+                ", meshCollider: " + meshCollider
+                );
+
+        Vector2 pixelUV = hit.textureCoord;
+        return pixelUV;
+        //TODO return (int,int)
+    }
+    // Update is called once per frame
+    void Update () {
         //TODO MAKE FRAME-RATE-INDEPENDENT (if necessary run simulation in seperate thread at lower framerate)
+
+        // CLICK/TOUCH DETECTION
+        if( Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began ||
+            Input.GetMouseButtonDown(0) ) {
+
+            float x = Input.mousePosition.x;
+            float y = Input.mousePosition.y;
+            Debug.Log("In polling: " + Input.mousePosition);
+
+            try
+            {
+                Vector2 pixelUV = mousePositionToUVCoordinates();
+                Vector2 textureCoords = new Vector2(pixelUV.x * texture.width, pixelUV.y * texture.height);
+                //Bottom-left is (0,0)
+                Debug.Log(textureCoords);
+
+                Oscillator2Position = textureCoords;
+                Oscillator2Active = true;
+
+
+
+                /*
+                float draw_thickness = 3.0f;
+                SetParticles(
+                    (int)textureCoords.x,
+                    (int)textureCoords.y,
+                    draw_thickness,
+                    draw_thickness,
+                    true, //draw static particles (doesn't matter here)
+                    
+                    )
+                    */
+                //public void SetParticles(int rectX, int rectY, int rectWidth, int rectHeight, float value, ParticleAttribute partatt)
+
+                /*
+                SetParticles(
+
+                    Convert.ToSingle(staticdraw), 
+                    WaveEngine.ParticleAttribute.Fixity);
+                    */
+            }
+            catch (Exception e) {
+                Debug.LogError("Incurred an exception but swallowed it. " + e);
+            } 
+        }
+
+
+
+        // WAVE PHYSICS
         int beginning = System.Environment.TickCount;
         while (System.Environment.TickCount - beginning < delay)
             CalculateForces();
 
+        // DRAWING
         // bufgraph.Graphics.DrawImage(bmp, 0, 0, control.ClientSize.Width, control.ClientSize.Height);
         // bufgraph.Render();
         drawToTexture();
@@ -104,7 +182,6 @@ public class WavesController : MonoBehaviour {
 
     Thread ForceCalcT; // Worker thread that will do force calculations.
 
-    Mutex mutex; // This will limit the access to variables.
 
     bool work_now = false; // True = Thread must make calculations now, False = Thread must sleep now.
 
@@ -149,9 +226,7 @@ public class WavesController : MonoBehaviour {
         {
             if (value > 0f)
             {
-                mutex.WaitOne();
                 mass = value;
-                mutex.ReleaseMutex();
             }
         }
     }
@@ -163,9 +238,7 @@ public class WavesController : MonoBehaviour {
         {
             if (value > 0f)
             {
-                mutex.WaitOne();
                 limit = value;
-                mutex.ReleaseMutex();
             }
         }
     }
@@ -177,9 +250,7 @@ public class WavesController : MonoBehaviour {
         {
             if (value >= 1f)
             {
-                mutex.WaitOne();
                 action_resolution = value;
-                mutex.ReleaseMutex();
             }
         }
     }
@@ -191,10 +262,8 @@ public class WavesController : MonoBehaviour {
         {
             if (value >= 1f)
             {
-                mutex.WaitOne();
                 sustain = value;
                 setSustain();
-                mutex.ReleaseMutex();
             }
         }
     }
@@ -205,9 +274,7 @@ public class WavesController : MonoBehaviour {
         {
             if (value >= 0)
             {
-                mutex.WaitOne();
                 delay = value;
-                mutex.ReleaseMutex();
             }
         }
     }
@@ -218,9 +285,7 @@ public class WavesController : MonoBehaviour {
         {
             if (value > 0f && value < Math.PI * 2f)
             {
-                mutex.WaitOne();
                 freq1 = value;
-                mutex.ReleaseMutex();
             }
         }
     }
@@ -231,9 +296,7 @@ public class WavesController : MonoBehaviour {
         {
             if (value > 0f && value < Math.PI * 2f)
             {
-                mutex.WaitOne();
                 freq2 = value;
-                mutex.ReleaseMutex();
             }
         }
     }
@@ -244,9 +307,7 @@ public class WavesController : MonoBehaviour {
         {
             if (power > 0f)
             {
-                mutex.WaitOne();
                 power = value;
-                mutex.ReleaseMutex();
             }
         }
     }
@@ -257,10 +318,8 @@ public class WavesController : MonoBehaviour {
         {
             if (size >= 1f)
             {
-                mutex.WaitOne();
                 size = value;
                 setPool();
-                mutex.ReleaseMutex();
             }
         }
     }
@@ -271,10 +330,8 @@ public class WavesController : MonoBehaviour {
         {
             if (value >= 1f)
             {
-                mutex.WaitOne();
                 min_sustain = value;
                 setSustain();
-                mutex.ReleaseMutex();
             }
         }
     }
@@ -285,10 +342,8 @@ public class WavesController : MonoBehaviour {
         {
             if (value > 0 && value < size / 2)
             {
-                mutex.WaitOne();
                 absorb_offset = value;
                 setSustain();
-                mutex.ReleaseMutex();
             }
         }
     }
@@ -297,9 +352,7 @@ public class WavesController : MonoBehaviour {
         get { return color1; }
         set
         {
-            mutex.WaitOne();
             color1 = value;
-            mutex.ReleaseMutex();
         }
     }
     public Color Color2
@@ -307,9 +360,7 @@ public class WavesController : MonoBehaviour {
         get { return color2; }
         set
         {
-            mutex.WaitOne();
             color2 = value;
-            mutex.ReleaseMutex();
         }
     }
     public Color ColorStatic
@@ -317,9 +368,7 @@ public class WavesController : MonoBehaviour {
         get { return colorstatic; }
         set
         {
-            mutex.WaitOne();
             colorstatic = value;
-            mutex.ReleaseMutex();
         }
     }
     public bool HighContrast
@@ -327,9 +376,7 @@ public class WavesController : MonoBehaviour {
         get { return highcont; }
         set
         {
-            mutex.WaitOne();
             highcont = value;
-            mutex.ReleaseMutex();
         }
     }
     public bool EdgeAbsorbtion
@@ -337,10 +384,8 @@ public class WavesController : MonoBehaviour {
         get { return edge_absorbtion; }
         set
         {
-            mutex.WaitOne();
             edge_absorbtion = value;
             setSustain();
-            mutex.ReleaseMutex();
         }
     }
 
@@ -349,10 +394,8 @@ public class WavesController : MonoBehaviour {
         get { return osc1active; }
         set
         {
-            mutex.WaitOne();
             osc1active = value;
             setSustain();
-            mutex.ReleaseMutex();
         }
     }
 
@@ -361,10 +404,8 @@ public class WavesController : MonoBehaviour {
         get { return osc2active; }
         set
         {
-            mutex.WaitOne();
             osc2active = value;
             setSustain();
-            mutex.ReleaseMutex();
         }
     }
 
@@ -376,10 +417,8 @@ public class WavesController : MonoBehaviour {
             
             if (value.x + value.y * size < size * size)
             {
-                mutex.WaitOne();
                 osc1point = (int)(value.x + value.y * size);
                 setSustain();
-                mutex.ReleaseMutex();
             }
         }
     }
@@ -391,37 +430,12 @@ public class WavesController : MonoBehaviour {
         {
             if (value.x + value.y * size < size * size)
             {
-                mutex.WaitOne();
                 osc2point = (int)(value.x + value.y * size);
                 setSustain();
-                mutex.ReleaseMutex();
             }
         }
     }
 
-
-    /* 
-    void control_Resize(object sender, EventArgs e)
-    {
-        
-        ThreadPool.QueueUserWorkItem((Object arg1) =>
-        {
-            mutex.WaitOne();
-            if (bufgraph != null)
-                bufgraph.Dispose();
-
-            if (bufgcont != null)
-                bufgcont.Dispose();
-
-            bufgcont = new BufferedGraphicsContext();
-
-            bufgraph = bufgcont.Allocate(control.CreateGraphics(), control.ClientRectangle);
-            mutex.ReleaseMutex();
-        });
-        
-
-    }
-    */
 
     /// <summary>
     /// Sets particles' specified attribute(s) to a specified value in a specified rectangular area.
@@ -434,7 +448,6 @@ public class WavesController : MonoBehaviour {
     /// <param name="partatt">Attribute(s) that will be set.</param>
     public void SetParticles(int rectX, int rectY, int rectWidth, int rectHeight, float value, ParticleAttribute partatt)
     {
-        mutex.WaitOne();
 
         if (rectX < 0)
             rectX = 0;
@@ -484,7 +497,6 @@ public class WavesController : MonoBehaviour {
                     vd_static[x + y] = Convert.ToBoolean(value);
             }
         }
-        mutex.ReleaseMutex();
     }
 
     /// <summary>
@@ -504,7 +516,6 @@ public class WavesController : MonoBehaviour {
 
         if ((int)partatt == 1 || (int)partatt == 2 || (int)partatt == 4 || (int)partatt == 8 || (int)partatt == 16)
         {
-            mutex.WaitOne();
 
             if (rectX < 0)
                 rectX = 0;
@@ -549,7 +560,6 @@ public class WavesController : MonoBehaviour {
                     r += 1;
                 }
             }
-            mutex.ReleaseMutex();
         }
 
         return result;
@@ -578,15 +588,12 @@ public class WavesController : MonoBehaviour {
         disposing = true;
         ThreadPool.QueueUserWorkItem((System.Object arg1) =>
         {
-            mutex.WaitOne();
             //REPLACE bmp.Dispose();
-            mutex.Close();
         });
     }
 
     void CalculateForces()
     {
-        Debug.Log("In CalculateForces");
         float total_height = 0;// This will be used to shift the height center of the whole particle system to the origin.
 
         // This loop calculates the forces exerted on the particles.
@@ -799,12 +806,19 @@ public class WavesController : MonoBehaviour {
 
     void drawToTexture()
     {
-        Debug.Log("in drawToTexture");
         if (this.texture == null || this.texture.width != size)
         {
             this.texture = new Texture2D(size, size);
-            applyBlackToTexture(texture); //TODO for debugging. remove me.
+            //new Texture2D()
+            //texture.
+            //applyBlackToTexture(texture); //TODO for debugging. remove me.
             GetComponent<Renderer>().material.mainTexture = texture;
+            //stretch texture
+            float screenX = transform.localScale.x;
+            float screenY = transform.localScale.z;
+            GetComponent<Renderer>().material.mainTextureScale = new Vector2(screenX, screenY);
+            //GetComponent<Renderer>().material.mainTextureScale = new Vector2(scaleX, scaleY);
+
         }
 
         // Get the bitmap data of "bmp".
@@ -894,6 +908,8 @@ public class WavesController : MonoBehaviour {
         //System.Runtime.InteropServices.Marshal.Copy(rgbdata, 0, ptr, bytes);
         //bmp.UnlockBits(bd);
         texture.SetPixels(colors);
+
+        texture.SetPixel(0, 0, Color.red); //TODO 4dbg remove me
         texture.Apply();
     }
 
