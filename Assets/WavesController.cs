@@ -55,11 +55,15 @@ public class WavesController : MonoBehaviour {
     void Update () {
         //TODO MAKE FRAME-RATE-INDEPENDENT (if necessary run simulation in seperate thread at lower framerate)
 
-        // STRETCH / RESIZE CANVAS-PLANE to cam-dimensions
-        float worldHeight = 2 * cam.orthographicSize;//worldWidth / cam.aspect;
-        float worldWidth = worldHeight * cam.aspect;//cam.orthographicSize * Screen.width / Screen.height;
+        // STRETCH / RESIZE CANVAS-PLANE... 
         float defaultSizeOfPlane = 10f;
-        this.transform.localScale = new Vector3(worldWidth / defaultSizeOfPlane, 1, worldHeight / defaultSizeOfPlane);
+        float worldHeight = 2 * cam.orthographicSize;
+        float worldWidth = worldHeight * cam.aspect;
+        //...to fit cam-dimensions
+        //this.transform.localScale = new Vector3(worldWidth / defaultSizeOfPlane, 1, worldHeight / defaultSizeOfPlane);
+        //...to cover cam-dimensions while staying square
+        float scale = Math.Max(worldHeight, worldWidth) / defaultSizeOfPlane;
+        this.transform.localScale = new Vector3(scale, 1, scale);
 
         // CLICK/TOUCH DETECTION
         if( Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began ||
