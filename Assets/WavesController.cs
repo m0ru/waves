@@ -91,15 +91,21 @@ public class WavesController : MonoBehaviour {
 
 
         // WAVE PHYSICS
-        int beginning = System.Environment.TickCount;
-        while (System.Environment.TickCount - beginning < delay)
-            CalculateForces();
+        //@times two: only one update at 30fps wasn't enough, the physics rate needs to stay below the actual frame-rate though, to avoid stuttering
+        physicsTimePool += Time.deltaTime * 2;
+        while(physicsTimePool > 1 / PHYSICS_UPDATES_PER_SECOND ) {
+            physicsTimePool -= 1 / PHYSICS_UPDATES_PER_SECOND;
+            CalculateForces(); 
+        }
 
         // DRAWING
         // bufgraph.Graphics.DrawImage(bmp, 0, 0, control.ClientSize.Width, control.ClientSize.Height);
         // bufgraph.Render();
         drawToTexture();
 	}
+
+    const float PHYSICS_UPDATES_PER_SECOND = 30;
+    float physicsTimePool = 0;
 
     private static void applyBlackToTexture(Texture2D texture) {
         for (int y = 0; y < texture.height; y++)
@@ -141,11 +147,11 @@ public class WavesController : MonoBehaviour {
 
 
 
+    //float mass = 0.05f; // Mass of each particle. It is the same for all particles.
     float mass = 0.1f; // Mass of each particle. It is the same for all particles.
     float limit = 500f; // Maximum absolute height a particle can reach.
     float action_resolution = 20f; // Resolution of movement of particles.
     float sustain = 1000f; // Anti-damping. Propagation range increases by increasing this variable. Minimum is 1f.
-    int delay = 1; // Time-out in milliseconds for force calculations.
     float phase1 = 0f; // Current phase value of oscillator1.
     float phase2 = 0f; // Current phase value of oscillator2.
     float freq1 = 0.2f; // Phase changing rate of oscillator1 per calculation. Frequency increases by increasing this variable.
@@ -239,17 +245,6 @@ public class WavesController : MonoBehaviour {
             {
                 sustain = value;
                 setSustain();
-            }
-        }
-    }
-    public int Delay
-    {
-        get { return delay; }
-        set
-        {
-            if (value >= 0)
-            {
-                delay = value;
             }
         }
     }
