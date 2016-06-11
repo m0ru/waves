@@ -21,6 +21,11 @@ public class WavesController : MonoBehaviour {
         cam = Camera.main;
         setPool();
 
+        //DRAWING A WALL (for debugging atm. should derived from level-objects)
+        this.SetParticles(100, 100, 50, 5, Convert.ToSingle(true), ParticleAttribute.Fixity);
+        this.SetParticles(100, 100, 5, 50, Convert.ToSingle(true), ParticleAttribute.Fixity);
+
+
         //TEXTURE
         this.texture = new Texture2D(size, size);
         GetComponent<Renderer>().material.mainTexture = texture;
