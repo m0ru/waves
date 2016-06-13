@@ -36,6 +36,7 @@ public class WavesController : MonoBehaviour {
         //cube.transform.position.x;
         w.setObstacles((int)cube.transform.position.x, (int)cube.transform.position.y, 20, 20);
 
+
     }
 
     public class Waves
@@ -157,10 +158,10 @@ public class WavesController : MonoBehaviour {
     float min_sustain = 2f; // The lowest sustainability value. They are located at the boundaries.
     bool edge_absorbtion = true; // If true, the particles near the boundaries will have low sustainability.
 
-    //REPLACE Control control; // This will be the control where the engine runs and renders on.
+        //REPLACE Control control; // This will be the control where the engine runs and renders on.
 
-    
-    public float Mass
+
+        public float Mass
     {
         get { return mass; }
         set
@@ -974,10 +975,10 @@ public class WavesController : MonoBehaviour {
         //Debug.Log("OnMouseDown: " + eventData.position);
     }
 
-    Vector2 mousePositionToUVCoordinates()
+    Vector2 screenToParticleCoords(Vector3 screenCoordinate)
     {
         RaycastHit hit;
-        if (!Physics.Raycast(cam.ScreenPointToRay(Input.mousePosition), out hit))
+        if (!Physics.Raycast(cam.ScreenPointToRay(screenCoordinate), out hit))
             throw new Exception("@mousePositionToUVCoordinates: Missed canvas plane with click somehow.");
 
         Renderer rend = hit.transform.GetComponent<Renderer>();
@@ -991,8 +992,14 @@ public class WavesController : MonoBehaviour {
                 );
 
         Vector2 pixelUV = hit.textureCoord;
-        return pixelUV;
+        return new Vector2(pixelUV.x * texture.width, pixelUV.y * texture.height);             
         //TODO return (int,int)
+
+    }
+
+    Vector2 mousePositionToParticleCoords()
+    {
+        return screenToParticleCoords(Input.mousePosition);
     }
     // Update is called once per frame
     void Update()
@@ -1019,8 +1026,9 @@ public class WavesController : MonoBehaviour {
 
             try
             {
-                Vector2 pixelUV = mousePositionToUVCoordinates();
-                Vector2 textureCoords = new Vector2(pixelUV.x * texture.width, pixelUV.y * texture.height);             
+                Vector2 textureCoords = mousePositionToParticleCoords();
+                //Vector2 pixelUV = mousePositionToParticleCoords();
+                //Vector2 textureCoords = new Vector2(pixelUV.x * texture.width, pixelUV.y * texture.height);             
                 w.Oscillator2Position = textureCoords;
                 w.Oscillator2Active = true;
             }
@@ -1039,8 +1047,9 @@ public class WavesController : MonoBehaviour {
             try
             {
                 ///tobedone janka
-                Vector2 pixelUV = mousePositionToUVCoordinates();
-                Vector2 textureCoords = new Vector2(pixelUV.x * texture.width, pixelUV.y * texture.height);
+                //Vector2 pixelUV = mousePositionToUVCoordinates();
+                //Vector2 textureCoords = new Vector2(pixelUV.x * texture.width, pixelUV.y * texture.height);
+                Vector2 textureCoords = mousePositionToParticleCoords();
                 w.SetParticles((int)x, (int)y, 20, 20, Convert.ToSingle(true), ParticleAttribute.Fixity);
             }
             catch (Exception e)
@@ -1060,11 +1069,38 @@ public class WavesController : MonoBehaviour {
             w.CalculateForces(); 
         }
 
+        // INTERACTION WITH REGULAR PHYSICS
+        GameObject[] pushables = GameObject.FindGameObjectsWithTag("Pushable");
+        foreach(GameObject pushable in pushables)
+        {
+            Debug.Log("pushable: " + pushable.transform.position);
+            Rigidbody2D rb = pushable.GetComponent<Rigidbody2D>();
+            if (rb.isKinematic) continue;
+            Vector3 pos = pushable.transform.position;
+
+            Vector3 screenPos = cam.WorldToScreenPoint(pos);    
+
+            Vector2 forceOrigin = new Vector2(pos.x + 0.0f, pos.y + 0.0f); // for debugging
+            Vector2 forceDirection = new Vector2(0.5f, 0.5f);
+            if (40 < debugForceCounter && debugForceCounter < 130)
+            {
+                Debug.Log("applying force " + forceDirection + " at " + forceOrigin);
+                rb.AddForceAtPosition(forceDirection, forceOrigin);
+            }
+            debugForceCounter++;
+            //rb.AddExplosionForce
+            //rb.AddForceAtPosition(gradientInWorldCoords, particelPosInWorldCoords)
+            //rb.AddForceAtPosition(gradientInWorldCoords, particelPosInWorldCoords)
+            //TODO remove force afterwards
+
+        }
+
         // DRAWING
         // bufgraph.Graphics.DrawImage(bmp, 0, 0, control.ClientSize.Width, control.ClientSize.Height);
         // bufgraph.Render();
         w.drawToTexture();
     }
+    int debugForceCounter = 0;
 
     public enum ParticleAttribute
     {
