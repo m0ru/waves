@@ -27,8 +27,6 @@ public class PlayerController : MonoBehaviour, IBeginDragHandler, IDragHandler {
 	}
 }
 */
-using UnityEngine;
-using System.Collections;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : MonoBehaviour
@@ -50,8 +48,19 @@ public class PlayerController : MonoBehaviour
     private int collisionCount = 0;
     private Transform camTransform;
 
+    private WavesController wc;
+    private int[] obstaclePositionsArray;
+
     void Start()
     {
+        //null!!
+        wc = new WavesController();
+       // wc.w.setObstacles(200,200,20, 20);
+
+ //       GameObject cube = GameObject.Find("Cube");
+        //cube.transform.position.x;
+       // wc.w.setObstacles((int)cube.transform.position.x,(int)cube.transform.position.y, 20, 20);
+
         myRigidbody = GetComponent<Rigidbody2D>();
         myTransform = transform;
         if (!cam)

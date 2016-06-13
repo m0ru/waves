@@ -12,91 +12,63 @@ using System.Threading;
 
 public class WavesController : MonoBehaviour {
 
-    //public Texture2D texture;
+    public Texture2D texture;
     // Use this for initialization
+    int size = 256; // Size of the wave pool. It indicates both the width and height since the pool will always be a square.
+
 
     Camera cam;
-    
-	void Start () {
+    Renderer render;
+    public Waves w;
+
+    void Start() {
         cam = Camera.main;
-        setPool();
+        //setPool();
 
         //TEXTURE
         this.texture = new Texture2D(size, size);
-        GetComponent<Renderer>().material.mainTexture = texture;
+
+        render = GetComponent<Renderer>();
+
+        w = new Waves(render, texture);
+
+        GameObject cube = GameObject.Find("Cube");
+        //cube.transform.position.x;
+        w.setObstacles((int)cube.transform.position.x, (int)cube.transform.position.y, 20, 20);
+
     }
 
-    //void OnMouseDown(UnityEngine.EventSystems.PointerEventData eventData) {
-    void OnMouseDown() { 
-        //Debug.Log("OnMouseDown: " + eventData.position);
-    }
-
-    Vector2 mousePositionToUVCoordinates()
+    public class Waves
     {
-        RaycastHit hit;
-        if (!Physics.Raycast(cam.ScreenPointToRay(Input.mousePosition), out hit))
-            throw new Exception("@mousePositionToUVCoordinates: Missed canvas plane with click somehow.");
 
-        Renderer rend = hit.transform.GetComponent<Renderer>();
-        MeshCollider meshCollider = hit.collider as MeshCollider;
-        if (rend == null || rend.material == null || rend.material.mainTexture == null || meshCollider == null)
-            throw new Exception("@mousePositionToUVCoordinates: some variable was null." +
-                "Renderer: " + rend +
-                ", material: " + rend.material +
-                ", maintexture: " + rend.material.mainTexture +
-                ", meshCollider: " + meshCollider
-                );
+        public Waves(Renderer render, Texture2D texture)
+        {
+            setPool();
+            this.texture = texture;
+            //GameObject.Find("Your_Name_Here").transform.position;
 
-        Vector2 pixelUV = hit.textureCoord;
-        return pixelUV;
-        //TODO return (int,int)
-    }
-    // Update is called once per frame
-    void Update () {
-        //TODO MAKE FRAME-RATE-INDEPENDENT (if necessary run simulation in seperate thread at lower framerate)
-
-        // STRETCH / RESIZE CANVAS-PLANE... 
-        float defaultSizeOfPlane = 10f;
-        float worldHeight = 2 * cam.orthographicSize;
-        float worldWidth = worldHeight * cam.aspect;
-        //...to fit cam-dimensions
-        //this.transform.localScale = new Vector3(worldWidth / defaultSizeOfPlane, 1, worldHeight / defaultSizeOfPlane);
-        //...to cover cam-dimensions while staying square
-        float scale = Math.Max(worldHeight, worldWidth) / defaultSizeOfPlane;
-        this.transform.localScale = new Vector3(scale, 1, scale);
-
-        // CLICK/TOUCH DETECTION
-        if( Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began ||
-            Input.GetMouseButtonDown(0) ) {
-
-            float x = Input.mousePosition.x;
-            float y = Input.mousePosition.y;
-
-            try
-            {
-                Vector2 pixelUV = mousePositionToUVCoordinates();
-                Vector2 textureCoords = new Vector2(pixelUV.x * texture.width, pixelUV.y * texture.height);
-                Oscillator2Position = textureCoords;
-                Oscillator2Active = true;
-            }
-            catch (Exception e) {
-                Debug.LogError("Incurred an exception but swallowed it. " + e);
-            } 
+            render.material.mainTexture = texture;
         }
 
 
-        // WAVE PHYSICS
-        int beginning = System.Environment.TickCount;
-        while (System.Environment.TickCount - beginning < delay)
+        ////set obstacles
+        public void setObstacles(int rectX, int rectY, int rectWidth, int rectHeight)
+        {
+            SetParticles(rectX, rectY, rectWidth, rectHeight, Convert.ToSingle(true), ParticleAttribute.Fixity);
+            // WAVE PHYSICS
+            
             CalculateForces();
 
-        // DRAWING
-        // bufgraph.Graphics.DrawImage(bmp, 0, 0, control.ClientSize.Width, control.ClientSize.Height);
-        // bufgraph.Render();
-        drawToTexture();
-	}
+            // DRAWING
+            // bufgraph.Graphics.DrawImage(bmp, 0, 0, control.ClientSize.Width, control.ClientSize.Height);
+            // bufgraph.Render();
+            drawToTexture();
+        }
+ 
+    
 
-    private static void applyBlackToTexture(Texture2D texture) {
+    private static void applyBlackToTexture(Texture2D texture)
+    {
         for (int y = 0; y < texture.height; y++)
         {
             for (int x = 0; x < texture.width; x++)
@@ -107,7 +79,8 @@ public class WavesController : MonoBehaviour {
         texture.Apply();
     }
 
-    private static void applyFractalToTexture(Texture2D texture) {
+    private static void applyFractalToTexture(Texture2D texture)
+    {
         for (int y = 0; y < texture.height; y++)
         {
             for (int x = 0; x < texture.width; x++)
@@ -140,7 +113,7 @@ public class WavesController : MonoBehaviour {
     float limit = 500f; // Maximum absolute height a particle can reach.
     float action_resolution = 20f; // Resolution of movement of particles.
     float sustain = 1000f; // Anti-damping. Propagation range increases by increasing this variable. Minimum is 1f.
-    int delay = 1; // Time-out in milliseconds for force calculations.
+    public int delay = 1; // Time-out in milliseconds for force calculations.
     float phase1 = 0f; // Current phase value of oscillator1.
     float phase2 = 0f; // Current phase value of oscillator2.
     float freq1 = 0.2f; // Phase changing rate of oscillator1 per calculation. Frequency increases by increasing this variable.
@@ -165,30 +138,22 @@ public class WavesController : MonoBehaviour {
     int osc1point = 0; // Location of the oscillator1 in the wave pool. It is an index value.
     int osc2point = 0; // Location of the oscillator2 in the wave pool. It is an index value.
 
-    int size = 256; // Size of the wave pool. It indicates both the width and height since the pool will always be a square.
-
+    
     Color color1 = Color.black; // Color of the crest or trough.
     Color color2 = Color.cyan; // Color of the crest or trough. 
 
     Color colorstatic = Color.yellow; // Color of the static particles.
 
+    int size = 256;
 
-    // These variables are used for edge absorbtion. It is used for eliminating reflection from window boundaries.
+        // These variables are used for edge absorbtion. It is used for eliminating reflection from window boundaries.
     int absorb_offset = 10; // Offset from each window boundary where the sustainability starts to decrease.
     float min_sustain = 2f; // The lowest sustainability value. They are located at the boundaries.
     bool edge_absorbtion = true; // If true, the particles near the boundaries will have low sustainability.
 
     //REPLACE Control control; // This will be the control where the engine runs and renders on.
 
-    public enum ParticleAttribute
-    {
-        Height = 1,
-        Velocity = 2,
-        Acceleration = 4,
-        Sustainability = 8,
-        Fixity = 16,
-        All = 32,
-    }
+    
     public float Mass
     {
         get { return mass; }
@@ -384,7 +349,7 @@ public class WavesController : MonoBehaviour {
         get { return new Vector2(osc1point % size, (int)Math.Floor((float)osc1point / (float)size)); }
         set
         {
-            
+
             if (value.x + value.y * size < size * size)
             {
                 osc1point = (int)(value.x + value.y * size);
@@ -480,7 +445,7 @@ public class WavesController : MonoBehaviour {
     /// <param name="partatt">Attribute whose array will be given. Only one attribute can be specified and "All" cannot be specified.</param>
     public float[] GetParticles(int rectX, int rectY, int rectWidth, int rectHeight, ParticleAttribute partatt)
     {
-        
+
         float[] result = new float[1];
 
         bool xh = false, xv = false, xa = false, xs = false, xf = false;
@@ -559,11 +524,11 @@ public class WavesController : MonoBehaviour {
         disposing = true;
         ThreadPool.QueueUserWorkItem((System.Object arg1) =>
         {
-            //REPLACE bmp.Dispose();
-        });
+                //REPLACE bmp.Dispose();
+            });
     }
 
-    void CalculateForces()
+    public void CalculateForces()
     {
         float total_height = 0;// This will be used to shift the height center of the whole particle system to the origin.
 
@@ -775,7 +740,7 @@ public class WavesController : MonoBehaviour {
 
     }
 
-    void drawToTexture()
+    public void drawToTexture()
     {
 
         // Get the bitmap data of "bmp".
@@ -977,13 +942,13 @@ public class WavesController : MonoBehaviour {
     void setPool()
     {
         /* REPLACE
-         
+
         if (bufgraph != null)
             bufgraph.Dispose();
 
         if (bufgcont != null)
             bufgcont.Dispose();
-            
+
 
         bufgcont = new BufferedGraphicsContext();
 
@@ -1006,5 +971,109 @@ public class WavesController : MonoBehaviour {
     }
 
     #endregion
+}
+
+    //void OnMouseDown(UnityEngine.EventSystems.PointerEventData eventData) {
+    void OnMouseDown()
+    {
+        //Debug.Log("OnMouseDown: " + eventData.position);
+    }
+
+    Vector2 mousePositionToUVCoordinates()
+    {
+        RaycastHit hit;
+        if (!Physics.Raycast(cam.ScreenPointToRay(Input.mousePosition), out hit))
+            throw new Exception("@mousePositionToUVCoordinates: Missed canvas plane with click somehow.");
+
+        Renderer rend = hit.transform.GetComponent<Renderer>();
+        MeshCollider meshCollider = hit.collider as MeshCollider;
+        if (rend == null || rend.material == null || rend.material.mainTexture == null || meshCollider == null)
+            throw new Exception("@mousePositionToUVCoordinates: some variable was null." +
+                "Renderer: " + rend +
+                ", material: " + rend.material +
+                ", maintexture: " + rend.material.mainTexture +
+                ", meshCollider: " + meshCollider
+                );
+
+        Vector2 pixelUV = hit.textureCoord;
+        return pixelUV;
+        //TODO return (int,int)
+    }
+    // Update is called once per frame
+    void Update()
+    {
+        //TODO MAKE FRAME-RATE-INDEPENDENT (if necessary run simulation in seperate thread at lower framerate)
+
+        // STRETCH / RESIZE CANVAS-PLANE... 
+        float defaultSizeOfPlane = 10f;
+        float worldHeight = 2 * cam.orthographicSize;
+        float worldWidth = worldHeight * cam.aspect;
+        //...to fit cam-dimensions
+        //this.transform.localScale = new Vector3(worldWidth / defaultSizeOfPlane, 1, worldHeight / defaultSizeOfPlane);
+        //...to cover cam-dimensions while staying square
+        float scale = Math.Max(worldHeight, worldWidth) / defaultSizeOfPlane;
+        this.transform.localScale = new Vector3(scale, 1, scale);
+
+        // CLICK/TOUCH DETECTION
+        if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began ||
+            Input.GetMouseButtonDown(0))
+        {
+
+            float x = Input.mousePosition.x;
+            float y = Input.mousePosition.y;
+
+            try
+            {
+                Vector2 pixelUV = mousePositionToUVCoordinates();
+                Vector2 textureCoords = new Vector2(pixelUV.x * texture.width, pixelUV.y * texture.height);             
+                w.Oscillator2Position = textureCoords;
+                w.Oscillator2Active = true;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("Incurred an exception but swallowed it. " + e);
+            }
+        }
+        else if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began ||
+          Input.GetMouseButtonDown(1))
+        {
+
+            float x = Input.mousePosition.x;
+            float y = Input.mousePosition.y;
+
+            try
+            {
+                ///tobedone janka
+                Vector2 pixelUV = mousePositionToUVCoordinates();
+                Vector2 textureCoords = new Vector2(pixelUV.x * texture.width, pixelUV.y * texture.height);
+                w.SetParticles((int)x, (int)y, 20, 20, Convert.ToSingle(true), ParticleAttribute.Fixity);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("Incurred an exception but swallowed it2. " + e);
+            }
+        }
+
+
+        // WAVE PHYSICS
+        int beginning = System.Environment.TickCount;
+        while (System.Environment.TickCount - beginning < w.delay)
+            w.CalculateForces();
+
+        // DRAWING
+        // bufgraph.Graphics.DrawImage(bmp, 0, 0, control.ClientSize.Width, control.ClientSize.Height);
+        // bufgraph.Render();
+        w.drawToTexture();
+    }
+
+    public enum ParticleAttribute
+    {
+        Height = 1,
+        Velocity = 2,
+        Acceleration = 4,
+        Sustainability = 8,
+        Fixity = 16,
+        All = 32,
+    }
 
 }
