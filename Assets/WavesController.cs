@@ -34,8 +34,26 @@ public class WavesController : MonoBehaviour {
 
         GameObject cube = GameObject.Find("Cube");
         //cube.transform.position.x;
-        w.setObstacles((int)cube.transform.position.x, (int)cube.transform.position.y, 20, 20);
+        Vector2 coord = getObjectCoordinates(cube);
 
+        w.setObstacles((int)coord.x, (int)coord.y, 30, 30);
+
+    }
+
+    private Vector2 getObjectCoordinates(GameObject obj)
+    {
+
+        Vector3 pos = cam.WorldToScreenPoint(obj.transform.position);
+        Debug.Log("pos" + pos);
+
+        Vector2 pixelUV = screenToParticleCoords(new Vector2(pos.x, pos.y));
+
+        Debug.Log("pixelUv" + pixelUV);
+        Vector2 textureCoords = new Vector2(pixelUV.x * texture.width, pixelUV.y * texture.height);
+
+        Debug.Log("textureCoords"+ textureCoords);
+
+        return textureCoords;
 
     }
 
@@ -47,27 +65,16 @@ public class WavesController : MonoBehaviour {
             setPool();
             this.texture = texture;
             //GameObject.Find("Your_Name_Here").transform.position;
-
+            
             render.material.mainTexture = texture;
         }
 
+    
 
         ////set obstacles
         public void setObstacles(int rectX, int rectY, int rectWidth, int rectHeight)
         {
             SetParticles(rectX, rectY, rectWidth, rectHeight, Convert.ToSingle(true), ParticleAttribute.Fixity);
-            // WAVE PHYSICS
-            
-            CalculateForces();
-
-        // WAVE PHYSICS   /
-       
-        
-
-            // DRAWING
-            // bufgraph.Graphics.DrawImage(bmp, 0, 0, control.ClientSize.Width, control.ClientSize.Height);
-            // bufgraph.Render();
-            drawToTexture();
         }
  
     
@@ -1029,6 +1036,7 @@ public class WavesController : MonoBehaviour {
         new int[]{  0,  1 },
         new int[]{  1,  1 }
     };
+
     // Update is called once per frame
     void Update()
     {
