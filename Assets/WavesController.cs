@@ -30,43 +30,54 @@ public class WavesController : MonoBehaviour {
 
         render = GetComponent<Renderer>();
 
-        w = new Waves(render, texture);
+        w = new Waves(render, texture, cam);
 
         GameObject cube = GameObject.Find("Cube");
         //cube.transform.position.x;
-        w.setObstacles((int)cube.transform.position.x, (int)cube.transform.position.y, 20, 20);
+        Vector2 coord = getObjectCoordinates(cube);
+
+        w.setObstacles((int)coord.x, (int)coord.y, 30, 30);
+
+    }
+
+    private Vector2 getObjectCoordinates(GameObject obj)
+    {
+
+        Vector3 pos = cam.WorldToScreenPoint(obj.transform.position);
+        Debug.Log("pos" + pos);
+
+        Vector2 pixelUV = objectPositionToUVCoordinates(new Vector2(pos.x, pos.y));
+
+        Debug.Log("pixelUv" + pixelUV);
+        Vector2 textureCoords = new Vector2(pixelUV.x * texture.width, pixelUV.y * texture.height);
+
+        Debug.Log("textureCoords"+ textureCoords);
+
+        return textureCoords;
 
     }
 
     public class Waves
     {
 
-        public Waves(Renderer render, Texture2D texture)
+        Camera cam;
+
+        public Waves(Renderer render, Texture2D texture, Camera cam)
         {
             setPool();
             this.texture = texture;
             //GameObject.Find("Your_Name_Here").transform.position;
 
+            this.cam = cam;
             render.material.mainTexture = texture;
         }
 
+    
 
         ////set obstacles
         public void setObstacles(int rectX, int rectY, int rectWidth, int rectHeight)
         {
             SetParticles(rectX, rectY, rectWidth, rectHeight, Convert.ToSingle(true), ParticleAttribute.Fixity);
-            // WAVE PHYSICS
-            
-            CalculateForces();
-
-        // WAVE PHYSICS   /
-       
-        
-
-            // DRAWING
-            // bufgraph.Graphics.DrawImage(bmp, 0, 0, control.ClientSize.Width, control.ClientSize.Height);
-            // bufgraph.Render();
-            drawToTexture();
         }
  
     
@@ -991,9 +1002,33 @@ public class WavesController : MonoBehaviour {
                 );
 
         Vector2 pixelUV = hit.textureCoord;
+
+        return pixelUV;
+    }
+
+    Vector2 objectPositionToUVCoordinates(Vector2 obj)
+    {
+        RaycastHit hit;
+        if (!Physics.Raycast(cam.ScreenPointToRay(/*Input.mousePosition*/obj), out hit))
+            throw new Exception("@mousePositionToUVCoordinates: Missed canvas plane with click somehow.");
+
+        Renderer rend = hit.transform.GetComponent<Renderer>();
+        MeshCollider meshCollider = hit.collider as MeshCollider;
+        if (rend == null || rend.material == null || rend.material.mainTexture == null || meshCollider == null)
+            throw new Exception("@mousePositionToUVCoordinates: some variable was null." +
+                "Renderer: " + rend +
+                ", material: " + rend.material +
+                ", maintexture: " + rend.material.mainTexture +
+                ", meshCollider: " + meshCollider
+                );
+
+        Vector2 pixelUV = hit.textureCoord;
+        Debug.Log("pixelUv object position : " + pixelUV);
+
         return pixelUV;
         //TODO return (int,int)
     }
+
     // Update is called once per frame
     void Update()
     {
@@ -1049,20 +1084,9 @@ public class WavesController : MonoBehaviour {
             }
         }
 
-        const float PHYSICS_UPDATES_PER_SECOND = 30;
-        float physicsTimePool = 0;
-
-        // WAVE PHYSICS
-        //@times two: only one update at 30fps wasn't enough, the physics rate needs to stay below the actual frame-rate though, to avoid stuttering
-        physicsTimePool += Time.deltaTime * 2;
-        while(physicsTimePool > 1 / PHYSICS_UPDATES_PER_SECOND ) {
-            physicsTimePool -= 1 / PHYSICS_UPDATES_PER_SECOND;
-            w.CalculateForces(); 
-        }
-
-        // DRAWING
-        // bufgraph.Graphics.DrawImage(bmp, 0, 0, control.ClientSize.Width, control.ClientSize.Height);
-        // bufgraph.Render();
+       
+        w.CalculateForces(); 
+       
         w.drawToTexture();
     }
 
