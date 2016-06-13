@@ -118,7 +118,7 @@ public class WavesController : MonoBehaviour {
 
     //float mass = 0.05f; // Mass of each particle. It is the same for all particles.
     float mass = 0.1f; // Mass of each particle. It is the same for all particles.
-    float limit = 500f; // Maximum absolute height a particle can reach.
+    public float limit = 500f; // Maximum absolute height a particle can reach.
     float action_resolution = 20f; // Resolution of movement of particles.
     float sustain = 1000f; // Anti-damping. Propagation range increases by increasing this variable. Minimum is 1f.
     float phase1 = 0f; // Current phase value of oscillator1.
@@ -157,6 +157,7 @@ public class WavesController : MonoBehaviour {
     int absorb_offset = 10; // Offset from each window boundary where the sustainability starts to decrease.
     float min_sustain = 2f; // The lowest sustainability value. They are located at the boundaries.
     bool edge_absorbtion = true; // If true, the particles near the boundaries will have low sustainability.
+    public float[] vd_previous;
 
         //REPLACE Control control; // This will be the control where the engine runs and renders on.
 
@@ -348,7 +349,7 @@ public class WavesController : MonoBehaviour {
 
             if (value.x + value.y * size < size * size)
             {
-                osc1point = (int)(value.x + value.y * size);
+                osc1point = ((int)value.x + (int)value.y * size);
                 setSustain();
             }
         }
@@ -366,6 +367,19 @@ public class WavesController : MonoBehaviour {
                 setSustain();
             }
         }
+    }
+    
+    public float getHeightAt(int x, int y)
+    {
+        return vd[x + y * size];
+    }
+    public float getVelocityAt(int x, int y)
+    {
+        return vdv[x + y * size];
+    }
+    public float getPreviousHeightAt(int x, int y)
+    {
+        return vd_previous[x + y * size];
     }
 
 
@@ -526,6 +540,9 @@ public class WavesController : MonoBehaviour {
 
     public void CalculateForces()
     {
+
+        this.vd_previous = (float[]) vd.Clone(); // backup for force calculations
+
         float total_height = 0;// This will be used to shift the height center of the whole particle system to the origin.
 
         // This loop calculates the forces exerted on the particles.
@@ -1001,6 +1018,17 @@ public class WavesController : MonoBehaviour {
     {
         return screenToParticleCoords(Input.mousePosition);
     }
+
+    public static readonly int[][] EIGHT_NEIGHBOURS = new int[][]{
+        new int[]{ -1, -1 },
+        new int[]{  0, -1 },
+        new int[]{  1, -1 },
+        new int[]{ -1,  0 },
+        new int[]{  1,  0 },
+        new int[]{ -1,  1 },
+        new int[]{  0,  1 },
+        new int[]{  1,  1 }
+    };
     // Update is called once per frame
     void Update()
     {
@@ -1073,13 +1101,85 @@ public class WavesController : MonoBehaviour {
         GameObject[] pushables = GameObject.FindGameObjectsWithTag("Pushable");
         foreach(GameObject pushable in pushables)
         {
-            Debug.Log("pushable: " + pushable.transform.position);
             Rigidbody2D rb = pushable.GetComponent<Rigidbody2D>();
             if (rb.isKinematic) continue;
             Vector3 pos = pushable.transform.position;
 
-            Vector3 screenPos = cam.WorldToScreenPoint(pos);    
+            Vector3 screenPos = cam.WorldToScreenPoint(pos);
+            Vector2 particlePos = screenToParticleCoords(screenPos);
 
+            //Debug.Log("===================");
+            // quick'n'dirty gradient: find 8-neighbour with strongest difference
+            // necessary: get movement direction of wave neighbour that grew most but used to be smaller
+            // the neighbour that's rising (positive velocity)?
+            float ownVelocity = w.getVelocityAt((int)particlePos.x, (int)particlePos.y);
+            float ownHeight = w.getHeightAt((int)particlePos.x, (int)particlePos.y);
+            float ownPrevHeight = w.getPreviousHeightAt((int)particlePos.x, (int)particlePos.y);
+            float ownGain = ownHeight - ownPrevHeight;
+
+            float maxVel = float.MinValue;
+            int[] risingNeighbour = null;
+            float lowest = float.MaxValue;
+            int[] lowestNeighbour = null;
+            float highest = float.MinValue;
+            int[] highestNeighbour = null;
+            float avgHeight = ownHeight;
+            float highestGain = float.MinValue;
+            float highestGainNeighbourHeight = float.MinValue;
+            int[] highestGainNeighbour = null;
+
+
+            foreach(int[] neighbour in EIGHT_NEIGHBOURS) {
+                int x = (int)particlePos.x + neighbour[0];
+                int y = (int)particlePos.y + neighbour[1];
+                float vel = w.getVelocityAt(x, y);
+                float prevHeight = w.getPreviousHeightAt(x, y);
+                float h = w.getHeightAt(x, y);
+                float gain = prevHeight - h;
+                //Debug.Log(vel + " @ " + neighbour[0] + "," +neighbour[1]);
+                if(h < w.limit * 0.95 && vel > maxVel) {
+                    maxVel = vel;
+                    risingNeighbour = neighbour;
+                }
+                if(h > highest) {
+                    highest = h;
+                    highestNeighbour = neighbour;
+                }
+                if(h < lowest) {
+                    lowest = h;
+                    lowestNeighbour = neighbour;
+                }
+
+                if(gain > highestGain) {
+                    highestGain = gain;
+                    highestGainNeighbourHeight = h;
+                    highestGainNeighbour = neighbour;
+                    
+                }
+
+                avgHeight += h;
+            }
+            avgHeight /= 9;
+
+            if (ownGain > 0 && highestGain > 0 && ownHeight > highestGainNeighbourHeight) {
+                Vector2 forceOrigin = new Vector2(pos.x + 0.0f, pos.y + 0.0f); // for debugging
+                Vector2 forceDirection = new Vector2(highestGainNeighbour[0], highestGainNeighbour[1]).normalized;
+                Debug.Log("highest gain: " + highestGain + " @ " + forceDirection +
+                    ", gain: " + ownGain + ", highest: " + highestGain +
+                    ", height: " + ownHeight + " > " + highestGainNeighbourHeight);
+                rb.AddForceAtPosition(forceDirection, forceOrigin);
+            }
+            
+            /*
+            if(maxVel > 0 && 0 < ownVelocity && ownHeight <  0.95 * w.limit ) {
+                Vector2 forceOrigin = new Vector2(pos.x + 0.0f, pos.y + 0.0f); // for debugging
+                Vector2 forceDirection = new Vector2(risingNeighbour[0], risingNeighbour[1]).normalized * maxVel * 0.01f;
+                Debug.Log("max: " + maxVel + " @ " + forceDirection);
+                rb.AddForceAtPosition(forceDirection, forceOrigin);
+            }
+            */
+
+            /*
             Vector2 forceOrigin = new Vector2(pos.x + 0.0f, pos.y + 0.0f); // for debugging
             Vector2 forceDirection = new Vector2(0.5f, 0.5f);
             if (40 < debugForceCounter && debugForceCounter < 130)
@@ -1088,6 +1188,7 @@ public class WavesController : MonoBehaviour {
                 rb.AddForceAtPosition(forceDirection, forceOrigin);
             }
             debugForceCounter++;
+            */
             //rb.AddExplosionForce
             //rb.AddForceAtPosition(gradientInWorldCoords, particelPosInWorldCoords)
             //rb.AddForceAtPosition(gradientInWorldCoords, particelPosInWorldCoords)
