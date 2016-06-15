@@ -133,7 +133,8 @@ public class WavesController : MonoBehaviour {
     float mass = 0.1f; // Mass of each particle. It is the same for all particles.
     public float limit = 500f; // Maximum absolute height a particle can reach.
     float action_resolution = 20f; // Resolution of movement of particles.
-    float sustain = 1000f; // Anti-damping. Propagation range increases by increasing this variable. Minimum is 1f.
+    //float sustain = 1000f; // Anti-damping. Propagation range increases by increasing this variable. Minimum is 1f.
+    float sustain = 80f; // Anti-damping. Propagation range increases by increasing this variable. Minimum is 1f.
     public float phase1 = 0f; // Current phase value of oscillator1.
     public float phase2 = 0f; // Current phase value of oscillator2.
     float freq1 = 0.2f; // Phase changing rate of oscillator1 per calculation. Frequency increases by increasing this variable.
