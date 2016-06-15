@@ -1045,7 +1045,7 @@ public class WavesController : MonoBehaviour {
     };
     
 
-    void stretch()
+    void fitCanvasOverViewport()
     {
        
         // STRETCH / RESIZE CANVAS-PLANE... 
@@ -1084,12 +1084,18 @@ public class WavesController : MonoBehaviour {
     // Update is called once per frame
     void Update()
     {
-        //TODO MAKE FRAME-RATE-INDEPENDENT (if necessary run simulation in seperate thread at lower framerate)
-
-        stretch();
+        fitCanvasOverViewport();
 
         createWall("Wall");
 
+        handleInput();
+        updateWavePhysics();
+        updateWave2RigidBodyForces();
+        w.drawToTexture();
+    }
+
+    void handleInput()
+    {
         // CLICK/TOUCH DETECTION
         if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began ||
             Input.GetMouseButtonDown(0))
@@ -1129,10 +1135,12 @@ public class WavesController : MonoBehaviour {
             }
         }
 
-        const float PHYSICS_UPDATES_PER_SECOND = 30;
-        float physicsTimePool = 0;
+    }
 
-        // WAVE PHYSICS
+    const float PHYSICS_UPDATES_PER_SECOND = 20;
+    float physicsTimePool = 0;
+
+    void updateWavePhysics() {
         //@times two: only one update at 30fps wasn't enough, the physics rate needs to stay below the actual frame-rate though, to avoid stuttering
         physicsTimePool += Time.deltaTime * 2;
         while(physicsTimePool > 1 / PHYSICS_UPDATES_PER_SECOND ) {
@@ -1140,10 +1148,11 @@ public class WavesController : MonoBehaviour {
             w.CalculateForces(); 
         }
 
-        // INTERACTION WITH REGULAR PHYSICS
+    }
+
+    void updateWave2RigidBodyForces() {
         GameObject[] pushables = GameObject.FindGameObjectsWithTag("Pushable");
-        foreach(GameObject pushable in pushables)
-        {
+        foreach (GameObject pushable in pushables) {
             try {
 
                 Rigidbody2D rb = pushable.GetComponent<Rigidbody2D>();
@@ -1164,18 +1173,12 @@ public class WavesController : MonoBehaviour {
                 Debug.Log("gradient: " + grd + " " + grd.magnitude + " " + ownHeight);
                 rb.AddForceAtPosition(forceDirection, forceOrigin);
 
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 Debug.LogError("game object left screen probably. swallowing exception. " + e);
             }
-
         }
-
-        // DRAWING
-        // bufgraph.Graphics.DrawImage(bmp, 0, 0, control.ClientSize.Width, control.ClientSize.Height);
-        // bufgraph.Render();
-        w.drawToTexture();
     }
-    int debugForceCounter = 0;
 
     public enum ParticleAttribute
     {
