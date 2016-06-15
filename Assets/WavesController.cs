@@ -1088,12 +1088,31 @@ public class WavesController : MonoBehaviour {
 
         createWall("Wall");
 
+        updateOsc2Timeout();
         handleInput();
         updateWavePhysics();
         updateWave2RigidBodyForces();
         w.drawToTexture();
     }
 
+    public float waveBurstDuration = 0.5f; //limits how long oscillators emit (if >0). in seconds.
+    float osc2timer = -1; // how long osc2 has been emitting. -1 if not running.
+    void startOsc2Timeout()
+    {
+        osc2timer = 0; //start counter
+    }
+    void updateOsc2Timeout()
+    {
+        if (osc2timer >= 0)
+        {
+            osc2timer += Time.deltaTime;
+        }
+        if(waveBurstDuration > 0 && osc2timer > waveBurstDuration)
+        {
+            w.Oscillator2Active = false;
+            osc2timer = -1;
+        }
+    }
     void handleInput()
     {
         // CLICK/TOUCH DETECTION
@@ -1106,12 +1125,17 @@ public class WavesController : MonoBehaviour {
 
             try
             {
-                
+
                 Vector2 textureCoords = mousePositionToParticleCoords();
                 //Vector2 pixelUV = mousePositionToParticleCoords();
                 //Vector2 textureCoords = new Vector2(pixelUV.x * texture.width, pixelUV.y * texture.height);             
-                w.Oscillator2Position = textureCoords;
-                w.Oscillator2Active = true;
+                if(waveBurstDuration < 0 || (waveBurstDuration > 0 && osc2timer < 0)) //not activated or blocking timer not running yet / run out already
+                {
+                    Debug.Log("placing osc, starting counter");
+                    startOsc2Timeout();
+                    w.Oscillator2Position = textureCoords;
+                    w.Oscillator2Active = true;
+                } 
             }
             catch (Exception e)
             {
@@ -1167,10 +1191,9 @@ public class WavesController : MonoBehaviour {
                 float ownPrevHeight = w.getPreviousHeightAt((int)particlePos.x, (int)particlePos.y);
                 float ownGain = ownHeight - ownPrevHeight;
 
-                Vector2 grd = gradient(particlePos, 4, (x, y) => w.getHeightAt(x, y));
+                Vector2 grd = gradient(particlePos, 3, (x, y) => w.getHeightAt(x, y));
                 Vector2 forceOrigin = new Vector2(pos.x + 0.0f, pos.y + 0.0f); // for debugging
                 Vector2 forceDirection = grd / 8; //the constant is a magic number/factor here. Trial and error showed that objects tended to stay on top of the wave using that.
-                Debug.Log("gradient: " + grd + " " + grd.magnitude + " " + ownHeight);
                 rb.AddForceAtPosition(forceDirection, forceOrigin);
 
             }
