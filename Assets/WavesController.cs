@@ -33,15 +33,6 @@ public class WavesController : MonoBehaviour {
        // stretch();
 
         w = new Waves(render, texture);
-
-        GameObject cube = GameObject.Find("Cube");
-        //cube.transform.position.x;
-        Vector2 coord = getObjectCoordinates(cube);
-
-        w.setObstacles((int)coord.x, (int)coord.y, 30, 30);
-
-
-
     }
 
     private Vector2 getObjectCoordinates(GameObject obj)
