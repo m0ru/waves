@@ -1144,8 +1144,8 @@ public class WavesController : MonoBehaviour {
         GameObject[] pushables = GameObject.FindGameObjectsWithTag("Pushable");
         foreach(GameObject pushable in pushables)
         {
-            try
-            {
+            try {
+
                 Rigidbody2D rb = pushable.GetComponent<Rigidbody2D>();
                 if (rb.isKinematic) continue;
                 Vector3 pos = pushable.transform.position;
@@ -1153,31 +1153,18 @@ public class WavesController : MonoBehaviour {
                 Vector3 screenPos = cam.WorldToScreenPoint(pos);
                 Vector2 particlePos = screenToParticleCoords(screenPos);
 
-                //Debug.Log("===================");
-                // quick'n'dirty gradient: find 8-neighbour with strongest difference
-                // necessary: get movement direction of wave neighbour that grew most but used to be smaller
-                // the neighbour that's rising (positive velocity)?
                 float ownVelocity = w.getVelocityAt((int)particlePos.x, (int)particlePos.y);
                 float ownHeight = w.getHeightAt((int)particlePos.x, (int)particlePos.y);
                 float ownPrevHeight = w.getPreviousHeightAt((int)particlePos.x, (int)particlePos.y);
                 float ownGain = ownHeight - ownPrevHeight;
 
-
-                // 5x5 kernel centered on particle
-                const int kernelArea = 25;
-
-                Vector2 heightCenter = centerOfGravity(particlePos, 2, (x, y) => w.getHeightAt(x, y));
-                Vector2 velocityCenter = centerOfGravity(particlePos, 2, (x, y) => w.getVelocityAt(x, y));
-                Vector2 prevHeightCenter = centerOfGravity(particlePos, 2, (x, y) => w.getPreviousHeightAt(x, y));
-
-
-                Vector2 grd = gradient(particlePos, 2, (x, y) => w.getHeightAt(x, y));
+                Vector2 grd = gradient(particlePos, 4, (x, y) => w.getHeightAt(x, y));
                 Vector2 forceOrigin = new Vector2(pos.x + 0.0f, pos.y + 0.0f); // for debugging
                 Vector2 forceDirection = grd / 8; //the constant is a magic number/factor here. Trial and error showed that objects tended to stay on top of the wave using that.
                 Debug.Log("gradient: " + grd + " " + grd.magnitude + " " + ownHeight);
                 rb.AddForceAtPosition(forceDirection, forceOrigin);
-            } catch (Exception e)
-            {
+
+            } catch (Exception e) {
                 Debug.LogError("game object left screen probably. swallowing exception. " + e);
             }
 
