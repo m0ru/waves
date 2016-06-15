@@ -30,6 +30,8 @@ public class WavesController : MonoBehaviour {
 
         render = GetComponent<Renderer>();
 
+       // stretch();
+
         w = new Waves(render, texture);
 
         GameObject cube = GameObject.Find("Cube");
@@ -44,18 +46,17 @@ public class WavesController : MonoBehaviour {
 
     private Vector2 getObjectCoordinates(GameObject obj)
     {
-
         Vector3 pos = cam.WorldToScreenPoint(obj.transform.position);
-        Debug.Log("pos" + pos);
 
-        Vector2 pixelUV = screenToParticleCoords(new Vector2(pos.x, pos.y));
+        Vector2 particleCoord = screenToParticleCoords(pos);
+        
 
-        Debug.Log("pixelUv" + pixelUV);
-        Vector2 textureCoords = new Vector2(pixelUV.x * texture.width, pixelUV.y * texture.height);
+        Debug.Log("pos " + pos + " particleCoord" + particleCoord);
 
-        Debug.Log("textureCoords"+ textureCoords);
+        w.Oscillator2Position = particleCoord;
+        w.Oscillator2Active = true;
 
-        return textureCoords;
+        return particleCoord;
 
     }
 
@@ -69,6 +70,9 @@ public class WavesController : MonoBehaviour {
             //GameObject.Find("Your_Name_Here").transform.position;
             
             render.material.mainTexture = texture;
+
+
+
         }
 
     
@@ -158,7 +162,7 @@ public class WavesController : MonoBehaviour {
     Color color1 = Color.black; // Color of the crest or trough.
     Color color2 = Color.cyan; // Color of the crest or trough. 
 
-    Color colorstatic = Color.yellow; // Color of the static particles.
+    Color colorstatic = Color.black; // Color of the static particles.
 
     int size = 256;
 
@@ -998,7 +1002,8 @@ public class WavesController : MonoBehaviour {
     //void OnMouseDown(UnityEngine.EventSystems.PointerEventData eventData) {
     void OnMouseDown()
     {
-        //Debug.Log("OnMouseDown: " + eventData.position);
+       
+        Debug.Log("OnMouseDown: " + Input.mousePosition + " to texture coord " + screenToParticleCoords(Input.mousePosition));
     }
 
     Vector2 screenToParticleCoords(Vector3 screenCoordinate)
@@ -1038,12 +1043,11 @@ public class WavesController : MonoBehaviour {
         new int[]{  0,  1 },
         new int[]{  1,  1 }
     };
+    
 
-    // Update is called once per frame
-    void Update()
+    void stretch()
     {
-        //TODO MAKE FRAME-RATE-INDEPENDENT (if necessary run simulation in seperate thread at lower framerate)
-
+       
         // STRETCH / RESIZE CANVAS-PLANE... 
         float defaultSizeOfPlane = 10f;
         float worldHeight = 2 * cam.orthographicSize;
@@ -1053,6 +1057,38 @@ public class WavesController : MonoBehaviour {
         //...to cover cam-dimensions while staying square
         float scale = Math.Max(worldHeight, worldWidth) / defaultSizeOfPlane;
         this.transform.localScale = new Vector3(scale, 1, scale);
+    }
+
+    //create wall from object with tag "Wall"
+    private void createWall(String wallName) {
+
+        GameObject[] wall = GameObject.FindGameObjectsWithTag(wallName);
+
+        foreach (GameObject wal in wall)
+        {
+
+            Vector2 coord = screenToParticleCoords(cam.WorldToScreenPoint(wal.transform.position));
+
+            BoxCollider2D boxCollid = wal.GetComponent<Collider2D>() as BoxCollider2D;
+            Vector3 boxColliderL = new Vector3(boxCollid.bounds.center.x, boxCollid.bounds.center.y, 0);
+            boxColliderL -= boxCollid.bounds.extents;
+            Vector3 boxColliderR = new Vector3(boxCollid.bounds.center.x + boxCollid.bounds.extents.x, boxCollid.bounds.center.y + boxCollid.bounds.extents.y, 0);
+
+            Vector2 coordBox = screenToParticleCoords(cam.WorldToScreenPoint(boxColliderL));
+            Vector2 coordBox2 = screenToParticleCoords(cam.WorldToScreenPoint(boxColliderR));
+
+            w.setObstacles((int)coordBox.x, (int)coordBox.y, (int)(coordBox2.x - coordBox.x), (int)(coordBox2.y - coordBox.y));
+        }
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        //TODO MAKE FRAME-RATE-INDEPENDENT (if necessary run simulation in seperate thread at lower framerate)
+
+        stretch();
+
+        createWall("Wall");
 
         // CLICK/TOUCH DETECTION
         if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began ||
@@ -1064,6 +1100,7 @@ public class WavesController : MonoBehaviour {
 
             try
             {
+                
                 Vector2 textureCoords = mousePositionToParticleCoords();
                 //Vector2 pixelUV = mousePositionToParticleCoords();
                 //Vector2 textureCoords = new Vector2(pixelUV.x * texture.width, pixelUV.y * texture.height);             
@@ -1079,16 +1116,12 @@ public class WavesController : MonoBehaviour {
           Input.GetMouseButtonDown(1))
         {
 
-            float x = Input.mousePosition.x;
-            float y = Input.mousePosition.y;
-
             try
             {
-                ///tobedone janka
-                //Vector2 pixelUV = mousePositionToUVCoordinates();
-                //Vector2 textureCoords = new Vector2(pixelUV.x * texture.width, pixelUV.y * texture.height);
-                Vector2 textureCoords = mousePositionToParticleCoords();
-                w.SetParticles((int)x, (int)y, 20, 20, Convert.ToSingle(true), ParticleAttribute.Fixity);
+                //remove?
+                Vector2 mouseCoordPart = screenToParticleCoords(Input.mousePosition);
+                w.setObstacles((int)mouseCoordPart.x, (int)mouseCoordPart.y, 10, 10);
+              
             }
             catch (Exception e)
             {
