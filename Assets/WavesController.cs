@@ -38,6 +38,8 @@ public class WavesController : MonoBehaviour {
 
         w.setObstacles((int)coord.x, (int)coord.y, 30, 30);
 
+
+
     }
 
     private Vector2 getObjectCoordinates(GameObject obj)
@@ -375,7 +377,7 @@ public class WavesController : MonoBehaviour {
             }
         }
     }
-    
+
     public float getHeightAt(int x, int y)
     {
         return vd[x + y * size];
@@ -1109,98 +1111,42 @@ public class WavesController : MonoBehaviour {
         GameObject[] pushables = GameObject.FindGameObjectsWithTag("Pushable");
         foreach(GameObject pushable in pushables)
         {
-            Rigidbody2D rb = pushable.GetComponent<Rigidbody2D>();
-            if (rb.isKinematic) continue;
-            Vector3 pos = pushable.transform.position;
-
-            Vector3 screenPos = cam.WorldToScreenPoint(pos);
-            Vector2 particlePos = screenToParticleCoords(screenPos);
-
-            //Debug.Log("===================");
-            // quick'n'dirty gradient: find 8-neighbour with strongest difference
-            // necessary: get movement direction of wave neighbour that grew most but used to be smaller
-            // the neighbour that's rising (positive velocity)?
-            float ownVelocity = w.getVelocityAt((int)particlePos.x, (int)particlePos.y);
-            float ownHeight = w.getHeightAt((int)particlePos.x, (int)particlePos.y);
-            float ownPrevHeight = w.getPreviousHeightAt((int)particlePos.x, (int)particlePos.y);
-            float ownGain = ownHeight - ownPrevHeight;
-
-            float maxVel = float.MinValue;
-            int[] risingNeighbour = null;
-            float lowest = float.MaxValue;
-            int[] lowestNeighbour = null;
-            float highest = float.MinValue;
-            int[] highestNeighbour = null;
-            float avgHeight = ownHeight;
-            float highestGain = float.MinValue;
-            float highestGainNeighbourHeight = float.MinValue;
-            int[] highestGainNeighbour = null;
-
-
-            foreach(int[] neighbour in EIGHT_NEIGHBOURS) {
-                int x = (int)particlePos.x + neighbour[0];
-                int y = (int)particlePos.y + neighbour[1];
-                float vel = w.getVelocityAt(x, y);
-                float prevHeight = w.getPreviousHeightAt(x, y);
-                float h = w.getHeightAt(x, y);
-                float gain = prevHeight - h;
-                //Debug.Log(vel + " @ " + neighbour[0] + "," +neighbour[1]);
-                if(h < w.limit * 0.95 && vel > maxVel) {
-                    maxVel = vel;
-                    risingNeighbour = neighbour;
-                }
-                if(h > highest) {
-                    highest = h;
-                    highestNeighbour = neighbour;
-                }
-                if(h < lowest) {
-                    lowest = h;
-                    lowestNeighbour = neighbour;
-                }
-
-                if(gain > highestGain) {
-                    highestGain = gain;
-                    highestGainNeighbourHeight = h;
-                    highestGainNeighbour = neighbour;
-                    
-                }
-
-                avgHeight += h;
-            }
-            avgHeight /= 9;
-
-            if (ownGain > 0 && highestGain > 0 && ownHeight > highestGainNeighbourHeight) {
-                Vector2 forceOrigin = new Vector2(pos.x + 0.0f, pos.y + 0.0f); // for debugging
-                Vector2 forceDirection = new Vector2(highestGainNeighbour[0], highestGainNeighbour[1]).normalized;
-                Debug.Log("highest gain: " + highestGain + " @ " + forceDirection +
-                    ", gain: " + ownGain + ", highest: " + highestGain +
-                    ", height: " + ownHeight + " > " + highestGainNeighbourHeight);
-                rb.AddForceAtPosition(forceDirection, forceOrigin);
-            }
-            
-            /*
-            if(maxVel > 0 && 0 < ownVelocity && ownHeight <  0.95 * w.limit ) {
-                Vector2 forceOrigin = new Vector2(pos.x + 0.0f, pos.y + 0.0f); // for debugging
-                Vector2 forceDirection = new Vector2(risingNeighbour[0], risingNeighbour[1]).normalized * maxVel * 0.01f;
-                Debug.Log("max: " + maxVel + " @ " + forceDirection);
-                rb.AddForceAtPosition(forceDirection, forceOrigin);
-            }
-            */
-
-            /*
-            Vector2 forceOrigin = new Vector2(pos.x + 0.0f, pos.y + 0.0f); // for debugging
-            Vector2 forceDirection = new Vector2(0.5f, 0.5f);
-            if (40 < debugForceCounter && debugForceCounter < 130)
+            try
             {
-                Debug.Log("applying force " + forceDirection + " at " + forceOrigin);
+                Rigidbody2D rb = pushable.GetComponent<Rigidbody2D>();
+                if (rb.isKinematic) continue;
+                Vector3 pos = pushable.transform.position;
+
+                Vector3 screenPos = cam.WorldToScreenPoint(pos);
+                Vector2 particlePos = screenToParticleCoords(screenPos);
+
+                //Debug.Log("===================");
+                // quick'n'dirty gradient: find 8-neighbour with strongest difference
+                // necessary: get movement direction of wave neighbour that grew most but used to be smaller
+                // the neighbour that's rising (positive velocity)?
+                float ownVelocity = w.getVelocityAt((int)particlePos.x, (int)particlePos.y);
+                float ownHeight = w.getHeightAt((int)particlePos.x, (int)particlePos.y);
+                float ownPrevHeight = w.getPreviousHeightAt((int)particlePos.x, (int)particlePos.y);
+                float ownGain = ownHeight - ownPrevHeight;
+
+
+                // 5x5 kernel centered on particle
+                const int kernelArea = 25;
+
+                Vector2 heightCenter = centerOfGravity(particlePos, 2, (x, y) => w.getHeightAt(x, y));
+                Vector2 velocityCenter = centerOfGravity(particlePos, 2, (x, y) => w.getVelocityAt(x, y));
+                Vector2 prevHeightCenter = centerOfGravity(particlePos, 2, (x, y) => w.getPreviousHeightAt(x, y));
+
+
+                Vector2 grd = gradient(particlePos, 2, (x, y) => w.getHeightAt(x, y));
+                Vector2 forceOrigin = new Vector2(pos.x + 0.0f, pos.y + 0.0f); // for debugging
+                Vector2 forceDirection = grd / 8; //the constant is a magic number/factor here. Trial and error showed that objects tended to stay on top of the wave using that.
+                Debug.Log("gradient: " + grd + " " + grd.magnitude + " " + ownHeight);
                 rb.AddForceAtPosition(forceDirection, forceOrigin);
+            } catch (Exception e)
+            {
+                Debug.LogError("game object left screen probably. swallowing exception. " + e);
             }
-            debugForceCounter++;
-            */
-            //rb.AddExplosionForce
-            //rb.AddForceAtPosition(gradientInWorldCoords, particelPosInWorldCoords)
-            //rb.AddForceAtPosition(gradientInWorldCoords, particelPosInWorldCoords)
-            //TODO remove force afterwards
 
         }
 
@@ -1219,6 +1165,70 @@ public class WavesController : MonoBehaviour {
         Sustainability = 8,
         Fixity = 16,
         All = 32,
+    }
+
+    public Vector2 gradient(Vector2 center, int sizeBelowCenter, Func<int,int,float> lookupFn) {
+        int sideLength = sizeBelowCenter * 2 + 1;
+        int kernelArea = sideLength * sideLength;
+
+        int kernelLeftBound = (int)Math.Max(0, center.x - sizeBelowCenter);
+        int kernelRightBound = (int)Math.Min(size - 1, center.x + sizeBelowCenter);
+        int kernelUpperBound = (int)Math.Max(0, center.y - sizeBelowCenter);
+        int kernelLowerBound = (int)Math.Min(size - 1, center.y + sizeBelowCenter);
+
+        // e.g. sizebelowcenter==2: kernel = [[-2 -1 0 1 2],[-2 1 0 1 2],...]
+        Vector2 gradient = new Vector2();
+        for(int y = kernelUpperBound; y <= kernelLowerBound; y++) {
+            float yOffset = y - center.y;
+            for(int x = kernelLeftBound; x <= kernelRightBound; x++) {
+                float xOffset = x - center.x;
+                float val = lookupFn(x, y);
+                gradient.x += val * xOffset;
+                gradient.y += val * yOffset;
+            }
+        }
+
+        int normalizer = 2 * //apmplification on left and right
+            ((sizeBelowCenter - 1) * sizeBelowCenter / 2) * //sum of numbers 1..sizeBelowCenter
+            sideLength; // height
+
+        return gradient / normalizer;
+    }
+
+    public Vector2 centerOfGravity(Vector2 center, int sizeBelowCenter, Func<int,int,float> lookupFn)
+    {
+        int sideLength = sizeBelowCenter * 2;
+        int kernelArea = sideLength * sideLength;
+
+        int kernelLeftBound = (int)Math.Max(0, center.x - sizeBelowCenter);
+        int kernelRightBound = (int)Math.Min(size - 1, center.x + sizeBelowCenter);
+        int kernelUpperBound = (int)Math.Max(0, center.y - sizeBelowCenter);
+        int kernelLowerBound = (int)Math.Min(size - 1, center.y + sizeBelowCenter);
+
+        float min = float.MaxValue;
+        for(int y = kernelUpperBound; y <= kernelLowerBound; y++) {
+            for(int x = kernelLeftBound; x <= kernelRightBound; x++) {
+                float val = lookupFn(x, y);
+                if (val < min) min = val;
+            }
+        }
+        // add this to all values so we don't have sub-zero values.
+        float compensation = -min;
+
+        Vector2 gravCenter = new Vector2(0,0);
+        float sum = 0;
+        for(int y = kernelUpperBound; y <= kernelLowerBound; y++) {
+            for(int x = kernelLeftBound; x <= kernelRightBound; x++) {
+                float val = lookupFn(x, y) + compensation;
+                sum += val;
+                gravCenter.x += x * val;
+                gravCenter.y += y * val;
+            }
+        }
+        if (sum == 0) return new Vector2(center.x, center.y);
+        gravCenter /= sum;
+        return gravCenter;
+
     }
 
 }
