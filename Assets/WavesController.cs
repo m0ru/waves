@@ -154,7 +154,7 @@ public class WavesController : MonoBehaviour {
     Color color1 = Color.black; // Color of the crest or trough.
     Color color2 = Color.cyan; // Color of the crest or trough. 
 
-    Color colorstatic = Color.yellow; // Color of the static particles.
+    Color colorstatic = Color.black; // Color of the static particles.
 
     int size = 256;
 
@@ -1200,9 +1200,9 @@ public class WavesController : MonoBehaviour {
             if (ownGain > 0 && highestGain > 0 && ownHeight > highestGainNeighbourHeight) {
                 Vector2 forceOrigin = new Vector2(pos.x + 0.0f, pos.y + 0.0f); // for debugging
                 Vector2 forceDirection = new Vector2(highestGainNeighbour[0], highestGainNeighbour[1]).normalized;
-                Debug.Log("highest gain: " + highestGain + " @ " + forceDirection +
+               /* Debug.Log("highest gain: " + highestGain + " @ " + forceDirection +
                     ", gain: " + ownGain + ", highest: " + highestGain +
-                    ", height: " + ownHeight + " > " + highestGainNeighbourHeight);
+                    ", height: " + ownHeight + " > " + highestGainNeighbourHeight);*/
                 rb.AddForceAtPosition(forceDirection, forceOrigin);
             }
             
