@@ -134,8 +134,8 @@ public class WavesController : MonoBehaviour {
     public float limit = 500f; // Maximum absolute height a particle can reach.
     float action_resolution = 20f; // Resolution of movement of particles.
     float sustain = 1000f; // Anti-damping. Propagation range increases by increasing this variable. Minimum is 1f.
-    float phase1 = 0f; // Current phase value of oscillator1.
-    float phase2 = 0f; // Current phase value of oscillator2.
+    public float phase1 = 0f; // Current phase value of oscillator1.
+    public float phase2 = 0f; // Current phase value of oscillator2.
     float freq1 = 0.2f; // Phase changing rate of oscillator1 per calculation. Frequency increases by increasing this variable.
     float freq2 = 0.2f; // Phase changing rate of oscillator2 per calculation. Frequency increases by increasing this variable.
     float power = 1.0f; // Power of the output force exerted on each particle. Natural value is 1.0f
@@ -1135,6 +1135,7 @@ public class WavesController : MonoBehaviour {
                     startOsc2Timeout();
                     w.Oscillator2Position = textureCoords;
                     w.Oscillator2Active = true;
+                    w.phase2 = (float)Math.PI; // to start with wave hill
                 } 
             }
             catch (Exception e)
