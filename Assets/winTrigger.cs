@@ -25,15 +25,15 @@ public class winTrigger : MonoBehaviour {
         float bottomWin = win.bounds.center.y - win.bounds.extents.y;
 
 
-            float rightOther = other.bounds.center.x - other.bounds.extents.x;
-            float leftOther = other.bounds.center.x + other.bounds.extents.x;
-            float topOther = other.bounds.center.y + other.bounds.extents.y;
-            float bottompOther = other.bounds.center.y - other.bounds.extents.y;
+        float rightOther = other.bounds.center.x - other.bounds.extents.x;
+        float leftOther = other.bounds.center.x + other.bounds.extents.x;
+        float topOther = other.bounds.center.y + other.bounds.extents.y;
+        float bottompOther = other.bounds.center.y - other.bounds.extents.y;
 
-            if ((rightWin < rightOther) &&
-                (topWin > topOther) &&
-                (leftWin > leftOther) &&
-                (bottomWin < bottompOther))
+        if ((rightWin < rightOther) &&
+            (topWin > topOther) &&
+            (leftWin > leftOther) &&
+            (bottomWin < bottompOther))
         {
             Debug.Log("You are in!! ");
 
