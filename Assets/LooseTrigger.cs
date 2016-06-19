@@ -8,6 +8,7 @@ public class LooseTrigger : MonoBehaviour {
     {
         Debug.Log("You lost!!!");
 
+        //in the future more abstract!
         SceneManager.LoadScene("waves");
 
     }
