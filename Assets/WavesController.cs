@@ -1184,9 +1184,9 @@ public class WavesController : MonoBehaviour {
                 float ownPrevHeight = w.getPreviousHeightAt((int)particlePos.x, (int)particlePos.y);
                 float ownGain = ownHeight - ownPrevHeight;
 
-                Vector2 grd = gradient(particlePos, 3, (x, y) => w.getHeightAt(x, y));
+                Vector2 grd = gradient(particlePos, 5, (x, y) => w.getHeightAt(x, y));
                 Vector2 forceOrigin = new Vector2(pos.x + 0.0f, pos.y + 0.0f); // for debugging
-                Vector2 forceDirection = grd / 8; //the constant is a magic number/factor here. Trial and error showed that objects tended to stay on top of the wave using that.
+                Vector2 forceDirection = grd / 15; //the constant is a magic number/factor here. Trial and error showed that objects tended to stay on top of the wave using that.
                 rb.AddForceAtPosition(forceDirection, forceOrigin);
 
             }
