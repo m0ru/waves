@@ -22,6 +22,14 @@ public class winTrigger : MonoBehaviour {
         GameObject wc = GameObject.FindGameObjectWithTag("WinCube");
         BoxCollider2D win = wc.GetComponent<BoxCollider2D>();
 
+
+        if(other.gameObject.tag == "Pushable")
+        {
+            Destroy(other.gameObject);
+        }
+
+
+        /*
         float rightWin = win.bounds.center.x - win.bounds.extents.x;
         float leftWin = win.bounds.center.x + win.bounds.extents.x;
         float topWin = win.bounds.center.y + win.bounds.extents.y;
@@ -51,6 +59,7 @@ public class winTrigger : MonoBehaviour {
             currentLevel = (currentLevel + 1) % NR_OF_LEVELS;
             SceneManager.LoadScene("Level" + currentLevel);
         }
+        */
     }
 
     void OnTriggerExit2D(Collider2D other)
@@ -72,6 +81,12 @@ public class winTrigger : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-	
+        // WIN CONDITION
+        GameObject[] pushables = GameObject.FindGameObjectsWithTag("Pushable");
+        if(pushables.Length == 0)
+        {
+            currentLevel = (currentLevel + 1) % NR_OF_LEVELS;
+            SceneManager.LoadScene("Level" + currentLevel);
+        }
 	}
 }
