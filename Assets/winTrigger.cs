@@ -7,6 +7,9 @@ public class winTrigger : MonoBehaviour {
 
     List<Collider2D> particlesIn;
 
+    static int currentLevel = 0;
+    const int NR_OF_LEVELS = 3;
+
     void OnTriggerEnter2D(Collider2D other)
     {
         //Debug.Log("You won!!!");
@@ -45,7 +48,8 @@ public class winTrigger : MonoBehaviour {
 
 
         if (particlesIn.Count == player.Length) {
-            SceneManager.LoadScene("Level2");
+            currentLevel = (currentLevel + 1) % NR_OF_LEVELS;
+            SceneManager.LoadScene("Level" + currentLevel);
         }
     }
 
@@ -59,6 +63,8 @@ public class winTrigger : MonoBehaviour {
     // Use this for initialization
     void Start () {
         particlesIn = new List<Collider2D>();
+        currentLevel = int.Parse("" + SceneManager.GetActiveScene().name[5]); //works till Level9
+
 
     }
 	
