@@ -6,12 +6,13 @@ public class LooseTrigger : MonoBehaviour {
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        Debug.Log("You lost!!!");
-
         //in the future more abstract!
         //SceneManager.LoadScene("waves");
         //Application.LoadLevel(0);
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        if(other.gameObject.tag == "Pushable") {
+            Debug.Log("You lost!!!");
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
 
     }
 

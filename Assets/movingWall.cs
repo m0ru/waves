@@ -7,6 +7,10 @@ public class movingWall : MonoBehaviour {
     Vector3 endPosition;
     Vector3 speed;
 
+    public float horizontalSpeed = 0.05f;
+    public float verticalSpeed = 0f;
+
+
     // Use this for initialization
     void Start () {
         startPosition = this.transform.position;

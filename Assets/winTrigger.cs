@@ -25,7 +25,17 @@ public class winTrigger : MonoBehaviour {
 
         if(other.gameObject.tag == "Pushable")
         {
-            Destroy(other.gameObject);
+            GameObject[] pushables = GameObject.FindGameObjectsWithTag("Pushable");
+            if(pushables.Length == 1)
+            {
+                Debug.Log("switching from: " + currentLevel);
+                currentLevel = (currentLevel + 1) % NR_OF_LEVELS;
+                Debug.Log("switching to: " + currentLevel);
+                SceneManager.LoadScene("Level" + currentLevel);
+            } else {
+                Destroy(other.gameObject);
+            }
+	
         }
 
 
@@ -75,18 +85,11 @@ public class winTrigger : MonoBehaviour {
     void Start () {
         particlesIn = new List<Collider2D>();
         currentLevel = int.Parse("" + SceneManager.GetActiveScene().name[5]); //works till Level9
-
-
+        Debug.Log("starting with level: " + currentLevel);
     }
-	
+
 	// Update is called once per frame
 	void Update () {
         // WIN CONDITION
-        GameObject[] pushables = GameObject.FindGameObjectsWithTag("Pushable");
-        if(pushables.Length == 0)
-        {
-            currentLevel = (currentLevel + 1) % NR_OF_LEVELS;
-            SceneManager.LoadScene("Level" + currentLevel);
-        }
 	}
 }
