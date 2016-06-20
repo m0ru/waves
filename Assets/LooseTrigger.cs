@@ -9,7 +9,9 @@ public class LooseTrigger : MonoBehaviour {
         Debug.Log("You lost!!!");
 
         //in the future more abstract!
-        SceneManager.LoadScene("waves");
+        //SceneManager.LoadScene("waves");
+        //Application.LoadLevel(0);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
 
     }
 
