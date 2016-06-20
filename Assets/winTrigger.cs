@@ -44,7 +44,7 @@ public class winTrigger : MonoBehaviour {
                 particlesIn.Add(other);
         }
 
-        GameObject[] player = GameObject.FindGameObjectsWithTag("Player");
+        GameObject[] player = GameObject.FindGameObjectsWithTag("Pushable");
 
 
         if (particlesIn.Count == player.Length) {
@@ -56,7 +56,9 @@ public class winTrigger : MonoBehaviour {
     void OnTriggerExit2D(Collider2D other)
     {
         if (particlesIn.IndexOf(other) > -1)
+        {
             particlesIn.Remove(other);
+        }
 
     }
 
