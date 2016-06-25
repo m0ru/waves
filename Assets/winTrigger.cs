@@ -8,7 +8,7 @@ public class winTrigger : MonoBehaviour {
     List<Collider2D> particlesIn;
 
     static int currentLevel = 0;
-    const int NR_OF_LEVELS = 3;
+    const int NR_OF_LEVELS = 5; //levels numbered Level0..n-1
 
     void OnTriggerEnter2D(Collider2D other)
     {
